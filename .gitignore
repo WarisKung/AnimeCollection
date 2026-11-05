@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Keep an example of public environment variable names in Git
+!.env.example
+
+# Local editor/AI backups (not part of deployed application)
+*.pre-ui-backup
+*.bak
+*.old

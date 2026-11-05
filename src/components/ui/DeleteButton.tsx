@@ -1,0 +1,2 @@
+"use client";import {useTransition} from "react";import {deleteAnime} from "@/lib/actions";import {toast} from "sonner";
+export default function DeleteButton({id}:{id:string}){const [busy,start]=useTransition();return <button className="btn text-red-500" disabled={busy} onClick={()=>{if(window.confirm("Delete this anime permanently?"))start(async()=>{try{await deleteAnime(id)}catch(e){toast.error(e instanceof Error?e.message:"Delete failed")}})}}>{busy?"Deleting...":"Delete"}</button>}
