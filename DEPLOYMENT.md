@@ -7,7 +7,8 @@
 - ใช้ Node.js 20.9+ (เครื่องพัฒนาใช้ Node.js 22)
 - สร้าง GitHub repository แบบ **Private** เป็นค่าเริ่มต้น (แนะนำ)
 - ใน Supabase ตรวจสอบว่าตารางและ RLS จาก `supabase/migrations/202611040001_init.sql` ทำงานแล้ว
-- รัน `supabase/migrations/202611040002_features.sql` ผ่าน Supabase SQL Editor เพื่อเพิ่ม `anime_format`, `watch_url`, `duration_minutes` และสร้าง Storage bucket `avatars`
+- ตรวจสอบว่าคอลัมน์ `anime_format`, `watch_url`, `duration_minutes` มีอยู่แล้ว หากไม่มี ให้รัน `supabase/migrations/202611040002_features.sql` ผ่าน Supabase SQL Editor
+- ถ้าคอลัมน์มีแล้ว แต่พบ `Bucket not found` ให้รัน `supabase/migrations/202611040004_avatar_bucket.sql` เพื่อสร้างเฉพาะ Storage bucket `avatars` โดยไม่แก้ข้อมูลอนิเมะ
 - หากรัน migration 002 แล้ว **ไม่ต้อง** รัน `202611040003_clear_thai_titles.sql` ซ้ำเพื่อความจำเป็น (002 ทำการล้างฟิลด์ `title_th` แล้ว)
 - SQL migration 002 ล้างค่า `title_th` เดิมทั้งหมดตาม requirement ของโปรเจกต์ ควรตรวจสอบ/สำรองฐานข้อมูลก่อนรัน
 
