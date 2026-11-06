@@ -11,6 +11,7 @@ import {toast} from "sonner";
 import Link from "next/link";
 import Image from "next/image";
 import {Search,CheckCircle2,BookOpen,Star,Save} from "lucide-react";
+import {ratingColor} from "@/lib/rating-color";
 
 export default function AnimeForm({anime,existingMalIds=[]}:{anime?:Anime;existingMalIds?:number[]}){
  const ownedIds=new Set(existingMalIds);
@@ -118,8 +119,8 @@ export default function AnimeForm({anime,existingMalIds=[]}:{anime?:Anime;existi
    {airedBeforeFinish&&<p className="text-amber-400 text-xs">คำเตือน: วันที่ดูจบเร็วกว่าวันที่ออกฉาย</p>}
    <div><label className="text-xs font-semibold" htmlFor="anime-genres">แนวอนิเมะ (คั่นด้วยเครื่องหมายจุลภาค)</label><input id="anime-genres" className="field mt-2" value={genreText} onChange={e=>{setGenreText(e.target.value);setValue("genres",e.target.value.split(",").map(s=>s.trim()).filter(Boolean))}} placeholder="Fantasy, Adventure, Drama"/><div className="flex flex-wrap gap-2 mt-3">{genres.map(g=><span className="tag" key={g}>{g}</span>)}</div></div>
    <div><p className="text-xs font-semibold mb-3">คะแนนของคุณ (1–10)</p><Controller name="rating" control={control} render={({field})=><div className="flex flex-wrap gap-1" role="group" aria-label="คะแนนอนิเมะ">
-    {Array.from({length:10},(_,i)=>i+1).map(n=><button type="button" key={n} aria-label={n+" คะแนน"} aria-pressed={field.value===n} onClick={()=>field.onChange(n)} className={"p-1.5 rounded-lg transition-colors "+(n<=field.value?"text-pink-400":"muted hover:text-pink-400")}><Star size={23} fill={n<=field.value?"currentColor":"none"}/></button>)}
-    <strong className="ml-2 self-center text-pink-400">{field.value}/10</strong>
+    {Array.from({length:10},(_,i)=>i+1).map(n=><button type="button" key={n} aria-label={n+" คะแนน"} aria-pressed={field.value===n} onClick={()=>field.onChange(n)} className={"p-1.5 rounded-lg transition-colors "+(n<=field.value?"":"muted hover:opacity-80")} style={n<=field.value?{color:ratingColor(n)}:undefined}><Star size={23} fill={n<=field.value?"currentColor":"none"}/></button>)}
+    <strong className="ml-2 self-center" style={{color:ratingColor(field.value)}}>{field.value}/10</strong>
    </div>}/></div>
    <label className="block text-xs font-semibold">รีวิวสั้น ๆ (ไม่บังคับ)<textarea rows={5} maxLength={500} placeholder="เขียนความรู้สึกเกี่ยวกับอนิเมะเรื่องนี้..." className="field mt-2 resize-y" {...register("review")}/><span className="block muted text-right text-xs">{review.length}/500</span></label>
 

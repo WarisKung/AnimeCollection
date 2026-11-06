@@ -5,6 +5,7 @@ import Image from "next/image";
 import {LayoutGrid,List,Search,SlidersHorizontal,CalendarDays,CheckCircle2,Star,BookOpen} from "lucide-react";
 import type {Anime} from "@/types/anime";
 import DeleteButton from "@/components/ui/DeleteButton";
+import {ratingColor} from "@/lib/rating-color";
 type Sort="finished"|"rating"|"title"|"release"|"episodes";
 const sorts:Sort[]=["finished","rating","title","release","episodes"];
 export default function LibraryView({anime,readonly=false}:{anime:Anime[];readonly?:boolean}){
@@ -48,7 +49,7 @@ export default function LibraryView({anime,readonly=false}:{anime:Anime[];readon
   <div className="panel p-4 sm:p-5 space-y-4">
    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
     <label className="relative flex-1 max-w-2xl"><Search size={19} className="absolute top-1/2 -translate-y-1/2 left-4 muted"/><input className="field !pl-11" aria-label="ค้นหาอนิเมะ" placeholder="ค้นหาอนิเมะที่ดูจบแล้ว..." value={search} onChange={e=>setSearch(e.target.value)}/></label>
-    <div className="flex w-full lg:w-auto justify-between lg:justify-end items-center gap-2 flex-wrap min-w-0"><span className="muted text-xs hidden sm:inline">ทั้งหมด {filtered.length} เรื่อง</span>
+    <div className="flex w-full lg:w-auto justify-between lg:justify-end items-center gap-2 flex-wrap min-w-0">
      {mode==="grid"&&<div className="flex items-center gap-1.5 min-w-0 max-w-full flex-wrap">
       <span className="text-xs font-semibold text-[var(--muted)] whitespace-nowrap">ขนาดการ์ด</span>
       <div className="flex items-center gap-0.5 rounded-xl border border-[var(--border)] bg-[var(--panel-raised)] p-1" role="group" aria-label="ขนาดการ์ด">
@@ -83,7 +84,7 @@ export default function LibraryView({anime,readonly=false}:{anime:Anime[];readon
    </div>}
   </div>
   {filtered.length===0?<div className="panel py-16 px-5 text-center space-y-4"><BookOpen size={48} className="text-violet-400 mx-auto"/><h3 className="text-xl font-bold">ยังไม่พบอนิเมะในคลัง</h3><p className="muted text-sm">{anime.length?"ลองปรับตัวกรองหรือค้นหาด้วยคำอื่น":"เริ่มต้นบันทึกเรื่องแรกของคุณ"}</p></div>
-  :mode==="grid"?<div className={"grid gap-3 sm:gap-5 "+(cardSize==="tiny"?"grid-cols-2 min-[480px]:grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10":cardSize==="small"?"grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 2xl:grid-cols-7":"grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5")}>
+  :mode==="grid"?<div className={"grid gap-3 sm:gap-5 "+(cardSize==="tiny"?"grid-cols-2 min-[480px]:grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10":cardSize==="small"?"grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6":"grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
    {filtered.map(a=><Link key={a.id} href={readonly?"#":"/anime/"+a.id} className="panel overflow-hidden group transition-all hover:-translate-y-1 hover:border-violet-500">
     <div className="relative aspect-[3/4] bg-violet-950/20 overflow-hidden">
      {a.poster_url?<Image unoptimized src={a.poster_url} alt={a.title} fill sizes="(max-width:640px) 50vw, 240px" className="object-cover transition-transform duration-500 group-hover:scale-105"/>:<div className="poster-placeholder h-full"><BookOpen size={40}/></div>}
@@ -91,15 +92,15 @@ export default function LibraryView({anime,readonly=false}:{anime:Anime[];readon
     </div>
     <div className={cardSize==="tiny"?"p-2":"p-3 sm:p-4"}><h3 className={cardSize==="tiny"?"font-bold text-xs line-clamp-2 min-h-8":"font-bold text-sm sm:text-base line-clamp-2 min-h-10"}>{a.title}</h3>
      {a.title_th&&<p className="muted text-xs mt-1 truncate">{a.title_th}</p>}
-     <p className="text-violet-400 font-bold mt-3 flex items-center gap-1.5"><Star size={16} fill="currentColor"/>{a.rating}<span className="text-xs muted">/10</span></p>
+     <p className="font-bold mt-3 flex items-center gap-1.5" style={{color:ratingColor(a.rating)}}><Star size={16} fill="currentColor"/>{a.rating}<span className="text-xs muted">/10</span></p>
      <p className="muted text-[10px] sm:text-xs mt-3 flex gap-1 items-center min-w-0"><CalendarDays size={13} className="shrink-0"/><span className="truncate">{a.finished_date}</span></p>
     </div>
    </Link>)}
   </div>:<div className="space-y-3">{filtered.map(a=><div key={a.id} className="panel p-3 flex items-center gap-4">
    <Link href={readonly?"#":"/anime/"+a.id} className="relative shrink-0 w-16 h-22 sm:w-20 sm:h-27 rounded-lg overflow-hidden bg-violet-950/20">{a.poster_url?<Image unoptimized src={a.poster_url} alt={a.title} fill sizes="80px" className="object-cover"/>:<div className="poster-placeholder h-full"><BookOpen size={24}/></div>}</Link>
    <div className="min-w-0 flex-1"><Link href={readonly?"#":"/anime/"+a.id} className="font-bold hover:text-violet-400 line-clamp-1">{a.title}</Link>{a.title_th&&<p className="muted text-xs truncate">{a.title_th}</p>}<p className="muted text-xs mt-1 truncate">{a.genres.join(" · ")}</p><p className="muted text-xs mt-2">{a.episodes??"—"} ตอน · {a.finished_date}</p></div>
-   <span className="text-violet-400 font-bold flex gap-1 items-center"><Star size={15} fill="currentColor"/>{a.rating}</span>
-   {!readonly&&<div className="hidden lg:flex gap-2"><Link className="btn text-xs" href={"/anime/"+a.id+"/edit"}>แก้ไข</Link><DeleteButton id={a.id}/></div>}
+   <span className="font-bold flex gap-1 items-center" style={{color:ratingColor(a.rating)}}><Star size={15} fill="currentColor"/>{a.rating}</span>
+   {!readonly&&<div className="hidden lg:flex gap-2"><Link className="btn anime-action anime-action-edit text-xs" href={"/anime/"+a.id+"/edit"}>แก้ไข</Link><DeleteButton id={a.id}/></div>}
   </div>)}</div>}
  </section>;
 }

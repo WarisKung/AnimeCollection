@@ -5,6 +5,7 @@ import {notFound} from "next/navigation";
 import DeleteButton from "@/components/ui/DeleteButton";
 import Image from "next/image";
 import {ArrowLeft,CalendarDays,Clapperboard, CheckCircle2,Pencil, Star,BookOpen} from "lucide-react";
+import {ratingColor} from "@/lib/rating-color";
 
 export default async function Detail({params}:{params:Promise<{id:string}>}){
   const {id}=await params;
@@ -29,11 +30,11 @@ export default async function Detail({params}:{params:Promise<{id:string}>}){
             <div className="flex flex-wrap gap-3 muted text-sm"><span className="flex items-center gap-2"><CalendarDays size={17}/>{a.aired_date?.slice(0,4)||"ไม่ระบุปี"}</span><span className="flex items-center gap-2"><Clapperboard size={17}/>{a.episodes??"—"} ตอน</span></div>
             <div className="border-t border-[var(--border)] pt-6"><p className="text-sm font-bold mb-3">แนวอนิเมะ</p><div className="flex flex-wrap gap-2">{a.genres.length?a.genres.map((g:string)=><span className="tag" key={g}>{g}</span>):<span className="muted text-sm">ไม่ได้ระบุแนว</span>}</div></div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div><p className="muted text-sm mb-2">คะแนนของคุณ</p><p className="text-3xl font-extrabold text-pink-400 flex items-center gap-2"><Star size={28} fill="currentColor"/>{a.rating}<span className="muted text-lg">/10</span></p></div>
+              <div><p className="muted text-sm mb-2">คะแนนของคุณ</p><p className="text-3xl font-extrabold flex items-center gap-2" style={{color:ratingColor(a.rating)}}><Star size={28} fill="currentColor"/>{a.rating}<span className="muted text-lg">/10</span></p></div>
               <div><p className="muted text-sm mb-2">วันที่ดูจบ</p><p className="font-semibold flex items-center gap-2"><CalendarDays size={19} className="text-violet-400"/>{a.finished_date}</p></div>
             </div>
             <div><p className="font-bold mb-3">รีวิวของคุณ</p><div className="rounded-xl p-5 bg-[var(--panel-raised)] border border-[var(--border)] min-h-32 whitespace-pre-wrap leading-7 text-sm">{a.review||<span className="muted">ยังไม่มีรีวิวสำหรับเรื่องนี้</span>}</div></div>
-            <div className="flex flex-wrap gap-3"><Link className="btn btn-primary min-w-36" href={`/anime/${id}/edit`}><Pencil size={17}/> แก้ไข</Link><DeleteButton id={id}/></div>
+            <div className="flex flex-wrap gap-3"><Link className="btn anime-action anime-action-edit min-w-36" href={`/anime/${id}/edit`}> <Pencil size={17}/> แก้ไข</Link><DeleteButton id={id}/></div>
           </div>
         </div>
       </section>

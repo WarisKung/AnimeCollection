@@ -1,13 +1,10 @@
 import Navbar from "@/components/ui/Navbar";
 import {requireOwner} from "@/lib/queries";
-import ShareSettings from "@/components/ui/ShareSettings";
 import ProfileSettings from "@/components/ui/ProfileSettings";
 import DeleteAllAnime from "@/components/ui/DeleteAllAnime";
-import { Share2 } from "lucide-react";
 
 export default async function Settings(){
   const {sb,user}=await requireOwner();
-  const {data}=await sb.from("library_settings").select("*").eq("owner_id",user.id).maybeSingle();
   const {count:animeCount,error:countError}=await sb.from("anime").select("id",{count:"exact",head:true}).eq("owner_id",user.id);
   if(countError)throw new Error(countError.message);
   const profileName = typeof user.user_metadata?.display_name === "string" ? user.user_metadata.display_name : user.email?.split("@")[0] || "เจ้าของคลังอนิเมะ";
@@ -15,10 +12,9 @@ export default async function Settings(){
   return <>
     <Navbar/>
     <main className="shell py-7 md:py-10">
-      <div className="page-heading"><div><h1 className="page-title">ตั้งค่า<span className="gradient-text">คลังอนิเมะ</span></h1><p className="page-subtitle">กำหนดการแชร์คลังอนิเมะของคุณ</p></div></div>
+      <div className="page-heading"><div><h1 className="page-title">ตั้งค่า<span className="gradient-text">คลังอนิเมะ</span></h1><p className="page-subtitle">จัดการข้อมูลบัญชีและคลังอนิเมะของคุณ</p></div></div>
       <div className="max-w-3xl space-y-9">
         <section><ProfileSettings initialName={profileName} initialAvatar={profileAvatar} email={user.email||""}/></section>
-        <section><div className="flex gap-2 items-center mb-4 font-bold"><Share2 size={18} className="text-violet-400"/> แชร์คลังอนิเมะ</div><ShareSettings settings={data}/></section>
         <DeleteAllAnime count={animeCount??0}/>
       </div>
     </main>

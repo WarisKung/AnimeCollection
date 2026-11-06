@@ -1,6 +1,7 @@
 "use client";
 import {useMemo,useState} from "react";
 import type {Anime} from "@/types/anime";
+import {ratingColor} from "@/lib/rating-color";
 import {ChartColumn,ChartPie,CheckSquare,Clock3,Film,Star,CalendarDays} from "lucide-react";
 
 const shades=["#8b5cf6","#ed4eaa","#b96adb","#6251af","#5b7bce","#9a76e8","#48518f","#d06db0"];
@@ -21,10 +22,10 @@ function calculate(items:Anime[]):Stats{
  genres:[...genres].sort((a,b)=>b[1]-a[1]),
  ratings:Array.from({length:10},(_,i)=>({rating:i+1,count:items.filter(a=>a.rating===i+1).length}))};
 }
-function Tile({label,value,unit,icon:Icon,note}:{label:string;value:string;unit:string;icon:typeof Star;note?:string}){
+function Tile({label,value,unit,icon:Icon,note,color}:{label:string;value:string;unit:string;icon:typeof Star;note?:string;color?:string}){
  return <div className="panel feature-panel px-5 py-6 min-h-40">
-  <div className="flex items-center gap-3"><span className="size-11 rounded-full bg-violet-500/25 text-violet-400 grid place-items-center"><Icon size={22}/></span><h2 className="font-bold text-sm">{label}</h2></div>
-  <p className="mt-4 text-4xl font-extrabold tracking-tight">{value}<span className="text-sm font-normal muted ml-2">{unit}</span></p>
+  <div className="flex items-center gap-3"><span className="size-11 rounded-full bg-violet-500/25 text-violet-400 grid place-items-center" style={color?{color}:undefined}><Icon size={22}/></span><h2 className="font-bold text-sm">{label}</h2></div>
+  <p className="mt-4 text-4xl font-extrabold tracking-tight" style={color?{color}:undefined}>{value}<span className="text-sm font-normal muted ml-2">{unit}</span></p>
   {note&&<p className="muted text-xs mt-2">{note}</p>}
  </div>;
 }
@@ -69,7 +70,7 @@ export default function StatsDashboard({anime}:{anime:Anime[]}){
    <Tile label="ดูจบทั้งหมด" icon={CheckSquare} value={s.count.toLocaleString("th-TH")} unit="เรื่อง"/>
    <Tile label="จำนวนตอนทั้งหมด" icon={Film} value={s.episodes.toLocaleString("th-TH")} unit="ตอน"/>
    <Tile label="ชั่วโมงที่รับชม" icon={Clock3} value={s.known?(s.minutes/60).toLocaleString("th-TH",{maximumFractionDigits:1}):"—"} unit="ชั่วโมง"/>
-   <Tile label="คะแนนเฉลี่ย" icon={Star} value={s.count?s.average.toFixed(2):"—"} unit="จาก 10"/>
+   <Tile label="คะแนนเฉลี่ย" icon={Star} value={s.count?s.average.toFixed(2):"—"} unit="จาก 10" color={s.count?ratingColor(s.average):undefined}/>
   </div>
   <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
    <article className="panel feature-panel p-5 min-w-0 overflow-hidden flex flex-col min-h-[460px]"><h2 className="font-extrabold flex items-center gap-2 flex-wrap"><ChartColumn size={20} className="text-violet-400"/> จำนวนอนิเมะที่ดูจบต่อปี</h2>
@@ -80,9 +81,9 @@ export default function StatsDashboard({anime}:{anime:Anime[]}){
     <div className="flex-1 flex items-center justify-center min-h-[300px] py-4 w-full">{genreTotal?<Donut data={maxGenre} total={genreTotal}/>:<p className="muted text-sm text-center">ยังไม่มีข้อมูลแนวอนิเมะ</p>}</div>
     <p className="text-base font-bold border-t border-[var(--border)] mt-auto pt-4 leading-relaxed break-words">{s.genres[0]?`แนวที่พบมากที่สุด: ${s.genres[0][0]} ${s.genres[0][1]} เรื่อง (${s.count?Math.round(s.genres[0][1]/s.count*100):0}%)`:"ยังไม่มีข้อมูลแนวอนิเมะ"}</p>
    </article>
-   <article className="panel feature-panel p-5 min-w-0 overflow-hidden xl:col-span-2"><h2 className="font-extrabold flex items-center gap-2 flex-wrap"><Star size={20} className="text-violet-400"/> การกระจายคะแนน (1–10)</h2>
-    <Bars data={s.ratings.map(({rating,count})=>({name:String(rating),count,color:rating>=8?"#8b5cf6":"#c457a9"}))}/>
-    <p className="text-base font-bold border-t border-[var(--border)] mt-auto pt-4 leading-relaxed break-words">{highRating.count?`คะแนนที่พบมากที่สุด: ${highRating.rating}/10 (${highRating.count} เรื่อง)`:"ยังไม่มีคะแนน"}</p>
+   <article className="panel feature-panel p-5 min-w-0 overflow-hidden xl:col-span-2"><h2 className="font-extrabold flex items-center gap-2 flex-wrap"><Star size={20} style={{color:highRating.count?ratingColor(highRating.rating):undefined}}/> การกระจายคะแนน (1–10)</h2>
+    <Bars data={s.ratings.map(({rating,count})=>({name:String(rating),count,color:ratingColor(rating)}))}/>
+    <p className="text-base font-bold border-t border-[var(--border)] mt-auto pt-4 leading-relaxed break-words">{highRating.count?<>คะแนนที่พบมากที่สุด: <span style={{color:ratingColor(highRating.rating)}}>{highRating.rating}/10</span> ({highRating.count} เรื่อง)</>:"ยังไม่มีคะแนน"}</p>
    </article>
   </div>
  </section>;

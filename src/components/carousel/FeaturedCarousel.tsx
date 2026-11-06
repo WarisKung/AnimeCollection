@@ -7,6 +7,7 @@ import {motion,useReducedMotion} from "motion/react";
 import Image from "next/image";
 import {useRouter} from "next/navigation";
 import type {Anime} from "@/types/anime";
+import {ratingColor} from "@/lib/rating-color";
 
 export default function FeaturedCarousel({anime,readonly=false}:{anime:Anime[];readonly?:boolean}){
  const reducedMotion=useReducedMotion();
@@ -21,6 +22,11 @@ export default function FeaturedCarousel({anime,readonly=false}:{anime:Anime[];r
   return Array.from({length:Math.ceil(8/slides.length)},()=>slides).flat();
  },[slides]);
 
+ // Start in the middle copy so previous and next posters are visible immediately.
+ const initialSnap=slides.length>0&&displaySlides.length>slides.length
+  ?Math.floor(displaySlides.length/slides.length/2)*slides.length
+  :0;
+
  const autoplay=useMemo(()=>Autoplay({
   delay:4000,
   stopOnInteraction:false,
@@ -34,8 +40,9 @@ export default function FeaturedCarousel({anime,readonly=false}:{anime:Anime[];r
   containScroll:false,
   slidesToScroll:1,
   watchDrag:slides.length>1,
+  startIndex:initialSnap,
  },[autoplay]);
- const [selected,setSelected]=useState(0);
+ const [selected,setSelected]=useState(initialSnap);
 
  useEffect(()=>{
   if(!emblaApi)return;
@@ -90,7 +97,7 @@ export default function FeaturedCarousel({anime,readonly=false}:{anime:Anime[];r
        {a.poster_url&&<Image unoptimized src={a.poster_url} alt={a.title} fill priority={i===0} sizes="(max-width:640px) 78vw, 460px" className="object-cover"/>}
        <div className="absolute inset-x-0 bottom-0 bg-black/75 p-4 pt-12 text-white">
         <h3 className="font-bold text-base sm:text-lg line-clamp-2">{a.title}</h3>
-        <p className="text-sm text-violet-200">{a.aired_date?.slice(0,4)||"—"} · ★ {a.rating}/10</p>
+        <p className="text-sm text-violet-200">{a.aired_date?.slice(0,4)||"—"} · <span className="font-bold" style={{color:ratingColor(a.rating)}}>★ {a.rating}/10</span></p>
         <div className="mt-2 flex flex-wrap gap-1">
          {a.genres.slice(0,2).map(g=><span key={g} className="rounded-full bg-white/20 px-2 py-0.5 text-[10px]">{g}</span>)}
         </div>

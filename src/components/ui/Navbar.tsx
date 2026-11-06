@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {usePathname,useRouter} from "next/navigation";
 import {useEffect,useState} from "react";
-import {BookOpen,House,PlusCircle,Settings,LogOut,Menu,X,Sparkles,ChartNoAxesColumn} from "lucide-react";
+import {BookOpen,House,PlusCircle,Settings,LogOut,Menu,X,Sparkles,ChartNoAxesColumn,PanelLeftClose,PanelLeftOpen} from "lucide-react";
 import {supabaseBrowser} from "@/lib/supabase/client";
 
 const entries=[
@@ -17,6 +17,18 @@ export default function Navbar({readonly=false}:{readonly?:boolean}){
  const pathname=usePathname();
  const router=useRouter();
  const [open,setOpen]=useState(false);
+ const [collapsed,setCollapsed]=useState(false);
+ useEffect(()=>{
+  const timer=window.setTimeout(()=>{
+   setCollapsed(localStorage.getItem("anime-sidebar-collapsed")==="true");
+  },0);
+  return()=>window.clearTimeout(timer);
+ },[]);
+ function toggleDesktopSidebar(){
+  const next=!collapsed;
+  localStorage.setItem("anime-sidebar-collapsed",String(next));
+  setCollapsed(next);
+ }
  const [profile,setProfile]=useState({name:"เจ้าของคลังอนิเมะ",avatar:""});
  useEffect(()=>{
   let active=true;
@@ -37,9 +49,10 @@ export default function Navbar({readonly=false}:{readonly?:boolean}){
  return <>
   <button type="button" className="mobile-menu-button" aria-label={open?"ปิดเมนู":"เปิดเมนู"} aria-expanded={open} onClick={()=>setOpen(p=>!p)}>{open?<X size={22}/>:<Menu size={22}/>}</button>
   {open&&<button type="button" className="sidebar-backdrop open" aria-label="ปิดเมนู" onClick={()=>setOpen(false)}/>}
-  <aside className={"app-sidebar "+(open?"open":"")} aria-label="เมนูหลัก">
+  {collapsed&&<button type="button" className="desktop-sidebar-reopen" aria-label="แสดงแถบเมนูด้านซ้าย" title="แสดงเมนู" onClick={toggleDesktopSidebar}><PanelLeftOpen size={21}/></button>}
+  <aside className={"app-sidebar "+(open?"open ":"")+(collapsed?"is-collapsed":"")} aria-label="เมนูหลัก">
    <Link href="/" className="sidebar-brand" onClick={()=>setOpen(false)}>{brand}</Link>
-   <p className="sidebar-section-label">MENU</p>
+   <div className="sidebar-menu-heading"><p className="sidebar-section-label">MENU</p><button type="button" className="sidebar-collapse-toggle" onClick={()=>{if(window.matchMedia("(max-width: 1023px)").matches){setOpen(false)}else{toggleDesktopSidebar()}}} aria-label="ซ่อนแถบเมนูด้านซ้าย" title="ซ่อนเมนู"><PanelLeftClose size={19}/></button></div>
    <nav className="sidebar-links">
     {entries.map(({href,label,icon:Icon})=><Link key={href} href={href} onClick={()=>setOpen(false)} className={"sidebar-link "+(pathname===href?"active":"")}><Icon size={20}/><span>{label}</span></Link>)}
    </nav>

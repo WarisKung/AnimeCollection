@@ -59,3 +59,33 @@ body:has(.app-sidebar) .shell{margin-left:254px;max-width:none}
 .mobile-menu-button{display:none;position:fixed;top:12px;left:12px;z-index:60;width:44px;height:44px;align-items:center;justify-content:center;border-radius:12px;border:1px solid var(--border);background:var(--panel);color:var(--foreground)}
 @media(max-width:1023px){.mobile-menu-button{display:flex}body:has(.app-sidebar) .shell{padding-top:64px}}
 @media(max-width:639px){.mobile-menu-button{top:10px;left:10px}}
+
+/* Sidebar can be collapsed on desktop independently of mobile responsiveness. */
+.sidebar-menu-heading{display:flex;align-items:center;justify-content:space-between;padding-right:9px}
+.sidebar-menu-heading .sidebar-section-label{margin:0}
+.sidebar-collapse-toggle{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;color:var(--muted);transition:background .2s,color .2s,transform .2s}
+.sidebar-collapse-toggle:hover{background:var(--panel-raised);color:var(--foreground);transform:scale(1.06)}
+.desktop-sidebar-reopen{display:none;position:fixed;top:17px;left:16px;z-index:45;width:43px;height:43px;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:12px;background:var(--panel);color:var(--foreground);box-shadow:var(--surface-shadow);transition:background .2s,transform .2s}
+.desktop-sidebar-reopen:hover{background:var(--panel-raised);transform:translateY(-2px)}
+body:has(.app-sidebar) .shell{transition:margin-left .25s ease}
+@media(min-width:1024px){
+ .app-sidebar{transition:transform .25s ease}
+ .app-sidebar.is-collapsed{transform:translateX(-100%)}
+ body:has(.app-sidebar.is-collapsed) .shell{margin-left:0}
+ .desktop-sidebar-reopen:has(+ .app-sidebar.is-collapsed){display:flex}
+}
+@media(max-width:1023px){
+ .app-sidebar.is-collapsed.open{transform:translateX(0)}
+ .desktop-sidebar-reopen{display:none!important}
+}
+/* Interactive actions: green = edit, red = delete. */
+.btn.anime-action{transition:color .22s ease,background .22s ease,border-color .22s ease,box-shadow .22s ease,transform .22s ease}
+.btn.anime-action:hover{transform:translateY(-2px) scale(1.035);color:#fff}
+.btn.anime-action svg{transition:transform .22s ease}
+.btn.anime-action:hover svg{transform:scale(1.12)}
+.btn.anime-action-edit:hover,.btn.anime-action-edit:focus-visible{background:#15803d;border-color:#22c55e;color:#fff;box-shadow:0 5px 22px #22c55e55}
+.btn.anime-action-delete:hover,.btn.anime-action-delete:focus-visible{background:#b91c1c;border-color:#ef4444;color:#fff;box-shadow:0 5px 22px #ef444455}
+@media(prefers-reduced-motion:reduce){
+ .btn.anime-action,.btn.anime-action svg,.app-sidebar,.desktop-sidebar-reopen{transition:none}
+ .btn.anime-action:hover,.btn.anime-action:hover svg{transform:none}
+}
