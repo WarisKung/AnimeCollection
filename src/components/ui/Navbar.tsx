@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {usePathname,useRouter} from "next/navigation";
 import {useEffect,useState} from "react";
-import {BookOpen,House,PlusCircle,Settings,LogOut,Menu,X,Sparkles,ChartNoAxesColumn,PanelLeftClose,PanelLeftOpen} from "lucide-react";
+import {BookOpen,House,PlusCircle,Settings,LogOut,Menu,Sparkles,ChartNoAxesColumn,PanelLeftClose,PanelLeftOpen} from "lucide-react";
 import {supabaseBrowser} from "@/lib/supabase/client";
 
 const entries=[
@@ -47,7 +47,7 @@ export default function Navbar({readonly=false}:{readonly?:boolean}){
  const brand=<span className="brand-mark"><span className="brand-icon"><BookOpen size={31}/><Sparkles size={13} className="brand-sparkle"/></span><span className="brand-text">ANIME<span>COMPLETED LIBRARY</span></span></span>;
  if(readonly)return <header className="public-nav"><Link href="/">{brand}</Link><span className="tag">คลังอนิเมะสาธารณะ · อ่านอย่างเดียว</span></header>;
  return <>
-  <button type="button" className="mobile-menu-button" aria-label={open?"ปิดเมนู":"เปิดเมนู"} aria-expanded={open} onClick={()=>setOpen(p=>!p)}>{open?<X size={22}/>:<Menu size={22}/>}</button>
+  {!open&&<button type="button" className="mobile-menu-button" aria-label="เปิดเมนู" aria-expanded={false} onClick={()=>setOpen(true)}><Menu size={22}/></button>}
   {open&&<button type="button" className="sidebar-backdrop open" aria-label="ปิดเมนู" onClick={()=>setOpen(false)}/>}
   {collapsed&&<button type="button" className="desktop-sidebar-reopen" aria-label="แสดงแถบเมนูด้านซ้าย" title="แสดงเมนู" onClick={toggleDesktopSidebar}><PanelLeftOpen size={21}/></button>}
   <aside className={"app-sidebar "+(open?"open ":"")+(collapsed?"is-collapsed":"")} aria-label="เมนูหลัก">

@@ -8,6 +8,7 @@ import Image from "next/image";
 import {useRouter} from "next/navigation";
 import type {Anime} from "@/types/anime";
 import {ratingColor} from "@/lib/rating-color";
+import {genreTagStyle} from "@/lib/genre-color";
 
 export default function FeaturedCarousel({anime,readonly=false}:{anime:Anime[];readonly?:boolean}){
  const reducedMotion=useReducedMotion();
@@ -99,7 +100,7 @@ export default function FeaturedCarousel({anime,readonly=false}:{anime:Anime[];r
         <h3 className="font-bold text-base sm:text-lg line-clamp-2">{a.title}</h3>
         <p className="text-sm text-violet-200">{a.aired_date?.slice(0,4)||"—"} · <span className="font-bold" style={{color:ratingColor(a.rating)}}>★ {a.rating}/10</span></p>
         <div className="mt-2 flex flex-wrap gap-1">
-         {a.genres.slice(0,2).map(g=><span key={g} className="rounded-full bg-white/20 px-2 py-0.5 text-[10px]">{g}</span>)}
+         {a.genres.slice(0,2).map(g=><span key={g} className="rounded-full border px-2 py-0.5 text-[10px]" style={genreTagStyle(g)}>{g}</span>)}
         </div>
        </div>
       </button>

@@ -89,3 +89,21 @@ body:has(.app-sidebar) .shell{transition:margin-left .25s ease}
  .btn.anime-action,.btn.anime-action svg,.app-sidebar,.desktop-sidebar-reopen{transition:none}
  .btn.anime-action:hover,.btn.anime-action:hover svg{transform:none}
 }
+
+/* Shared solid action colors; hover darkens each action while preserving contrast. */
+.btn.anime-action-edit{background:#16a34a;border-color:#16a34a;color:#fff;box-shadow:0 4px 14px #16a34a26}
+.btn.anime-action-delete,.btn.anime-action-cancel{background:#dc2626;border-color:#dc2626;color:#fff;box-shadow:0 4px 14px #dc262626}
+.btn.anime-action-save{background:#2563eb;border-color:#2563eb;color:#fff;box-shadow:0 4px 14px #2563eb26}
+.btn.anime-action-edit:hover,.btn.anime-action-edit:focus-visible{background:#166534;border-color:#22c55e;box-shadow:0 7px 24px #16a34a66;filter:none}
+.btn.anime-action-delete:hover,.btn.anime-action-delete:focus-visible,
+.btn.anime-action-cancel:hover,.btn.anime-action-cancel:focus-visible{background:#991b1b;border-color:#ef4444;box-shadow:0 7px 24px #dc262666;filter:none}
+.btn.anime-action-save:hover,.btn.anime-action-save:focus-visible{background:#1e40af;border-color:#60a5fa;box-shadow:0 7px 24px #2563eb66;filter:none}
+.btn.anime-action:disabled:hover{transform:none;box-shadow:none;filter:none}
+@media(prefers-reduced-motion:reduce){.btn.anime-action:hover{transform:none}}
+
+/* Frosted glass tooltip, translucent while keeping text readable. */
+.anime-card-tooltip {
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  text-shadow: 0 1px 3px rgba(0,0,0,.95);
+}
