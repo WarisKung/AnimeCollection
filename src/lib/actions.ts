@@ -4,8 +4,9 @@ import {redirect} from "next/navigation";
 import {requireOwner} from "@/lib/queries";
 import {animeSchema,type AnimeInput} from "@/lib/validation";
 import {nanoid} from "nanoid";
+import {shareSlugFromDisplayName} from "@/lib/share-slug";
 
-export type ActionResult={ok:boolean;message?:string;id?:string};
+export type ActionResult={ok:boolean;message?:string;id?:string;share_slug?:string};
 
 export async function saveAnime(input:AnimeInput,id?:string):Promise<ActionResult>{
  const valid=animeSchema.safeParse(input);
@@ -71,11 +72,81 @@ export async function deleteAllAnime(confirmation:string):Promise<ActionResult>{
  return {ok:true};
 }
 
-export async function updateSharing(is_public:boolean,regenerate=false):Promise<ActionResult>{
+// The share link is always public and tracks the authenticated owner's displayed name.
+export async function syncShareLink():Promise<ActionResult>{
  const {sb,user}=await requireOwner();
- const {data:old}=await sb.from("library_settings").select("share_slug").eq("owner_id",user.id).maybeSingle();
- const {error}=await sb.from("library_settings").upsert({owner_id:user.id,is_public,share_slug:regenerate||!old?.share_slug?nanoid(18):old.share_slug});
- if(error)return {ok:false,message:error.message};
+ const profileName=typeof user.user_metadata?.display_name==="string"&&user.user_metadata.display_name.trim()
+  ?user.user_metadata.display_name.trim()
+  :user.email?.split("@")[0]||"anime-library";
+ const displayName=profileName.slice(0,80);
+ const base=shareSlugFromDisplayName(displayName);
+
+ const {data:old,error:readError}=await sb.from("library_settings")
+  .select("share_slug,display_name,is_public")
+  .eq("owner_id",user.id).maybeSingle();
+ if(readError)return {ok:false,message:readError.message};
+
+ // Preserve an existing named link when the display name has not changed.
+ if(old?.is_public&&old.display_name===displayName&&
+    (old.share_slug===base||old.share_slug.startsWith(base+"-"))){
+  return {ok:true,share_slug:old.share_slug};
+ }
+
+ // The database's unique constraint is authoritative; another user may have the same name.
+ for(let attempt=0;attempt<5;attempt++){
+  const share_slug=attempt===0?base:base+"-"+nanoid(6).toLowerCase();
+  const {error}=await sb.from("library_settings").upsert({
+   owner_id:user.id,is_public:true,share_slug,display_name:displayName
+  });
+  if(!error){
+   revalidatePath("/settings");
+   return {ok:true,share_slug};
+  }
+  if(error.code!=="23505")return {ok:false,message:error.message};
+ }
+ return {ok:false,message:"ชื่อสำหรับแชร์ซ้ำกับบัญชีอื่น กรุณาลองอีกครั้ง"};
+}
+
+// Called only after the account owner explicitly confirms deletion.
+// Password verification, avatar cleanup, and the owner-scoped RPC run on the server.
+export async function deleteMyAccount(confirmation:string,password:string):Promise<ActionResult>{
+ if(confirmation!=="ลบบัญชี")return {ok:false,message:"กรุณาพิมพ์ ลบบัญชี เพื่อยืนยัน"};
+ if(!password)return {ok:false,message:"กรุณากรอกรหัสผ่านปัจจุบัน"};
+
+ const {sb,user}=await requireOwner();
+ if(!user.email)return {ok:false,message:"บัญชีนี้ไม่มีอีเมลสำหรับยืนยันตัวตน"};
+
+ const {data:verified,error:passwordError}=await sb.auth.signInWithPassword({
+  email:user.email,
+  password
+ });
+ if(passwordError||verified.user?.id!==user.id){
+  return {ok:false,message:"รหัสผ่านปัจจุบันไม่ถูกต้อง"};
+ }
+
+ // Delete user-owned files through Storage API before removing the auth account.
+ for(let batch=0;batch<100;batch++){
+  const {data:files,error:listError}=await sb.storage.from("avatars").list(user.id,{limit:100});
+  if(listError){
+   if(/bucket not found/i.test(listError.message))break;
+   return {ok:false,message:"ไม่สามารถตรวจสอบรูปโปรไฟล์ได้: "+listError.message};
+  }
+  if(!files?.length)break;
+  const paths=files.filter(f=>f.id&&f.name).map(f=>user.id+"/"+f.name);
+  if(!paths.length)break;
+  const {error:removeError}=await sb.storage.from("avatars").remove(paths);
+  if(removeError)return {ok:false,message:"ไม่สามารถลบรูปโปรไฟล์ได้: "+removeError.message};
+  if(batch===99)return {ok:false,message:"รูปโปรไฟล์มีจำนวนมากเกินไป กรุณาติดต่อผู้ดูแลระบบ"};
+ }
+
+ // The database function uses auth.uid(), never a caller-supplied user ID.
+ const {error}=await sb.rpc("delete_my_account");
+ if(error){
+  if(error.code==="PGRST202"||error.code==="42883")
+   return {ok:false,message:"ยังไม่ได้ติดตั้งฟังก์ชันลบบัญชี กรุณารัน SQL Migration 202611090005_delete_account.sql ใน Supabase"};
+  return {ok:false,message:"ไม่สามารถลบบัญชีได้: "+error.message};
+ }
+ revalidatePath("/");
  revalidatePath("/settings");
  return {ok:true};
 }

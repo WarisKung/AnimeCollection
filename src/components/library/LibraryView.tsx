@@ -9,7 +9,7 @@ import {ratingColor} from "@/lib/rating-color";
 import {genreTagStyle} from "@/lib/genre-color";
 type Sort="finished"|"rating"|"title"|"release"|"episodes";
 const sorts:Sort[]=["finished","rating","title","release","episodes"];
-export default function LibraryView({anime,readonly=false}:{anime:Anime[];readonly?:boolean}){
+export default function LibraryView({anime,readonly=false,shareBase}:{anime:Anime[];readonly?:boolean;shareBase?:string}){
  const [ready,setReady]=useState(false);
  const [mode,setMode]=useState<"grid"|"list">("grid");
  const [search,setSearch]=useState("");
@@ -43,6 +43,7 @@ export default function LibraryView({anime,readonly=false}:{anime:Anime[];readon
  const allGenres=useMemo(()=>[...new Set(anime.flatMap(a=>a.genres))].sort(),[anime]);
  const years=(field:"aired_date"|"finished_date")=>[...new Set(anime.map(a=>a[field]?.slice(0,4)).filter((v):v is string=>Boolean(v)))].sort().reverse();
  const filtered=useMemo(()=>anime.filter(a=>(a.title+" "+(a.title_th||"")).toLowerCase().includes(search.toLowerCase())&&genres.every(g=>a.genres.includes(g))&&a.rating>=Number(min)&&a.rating<=Number(max)&&(!release||a.aired_date?.startsWith(release))&&(!finished||a.finished_date.startsWith(finished))&&(episodeSize==="all"||(a.episodes!==null&&(episodeSize==="short"?a.episodes<=12:episodeSize==="medium"?a.episodes>=13&&a.episodes<=26:episodeSize==="long"?a.episodes>=27:true)))).sort((a,b)=>sort==="rating"?b.rating-a.rating:sort==="title"?a.title.localeCompare(b.title):sort==="release"?(b.aired_date||"").localeCompare(a.aired_date||""):sort==="episodes"?(b.episodes||0)-(a.episodes||0):b.finished_date.localeCompare(a.finished_date)),[anime,search,genres,min,max,release,finished,sort,episodeSize]);
+ const animeHref=(id:string)=>readonly?(shareBase?shareBase+"/anime/"+id:"#"):"/anime/"+id;
  function switchMode(value:"grid"|"list"){setMode(value);localStorage.setItem("anime-view",value)}
  function switchSize(value:"tiny"|"small"|"medium"){setCardSize(value);localStorage.setItem("anime-card-size",value)}
  return <section className="space-y-5" aria-label="คลังอนิเมะ">
@@ -92,7 +93,7 @@ export default function LibraryView({anime,readonly=false}:{anime:Anime[];readon
   </div>
   {filtered.length===0?<div className="panel py-16 px-5 text-center space-y-4"><BookOpen size={48} className="text-violet-400 mx-auto"/><h3 className="text-xl font-bold">ยังไม่พบอนิเมะในคลัง</h3><p className="muted text-sm">{anime.length?"ลองปรับตัวกรองหรือค้นหาด้วยคำอื่น":"เริ่มต้นบันทึกเรื่องแรกของคุณ"}</p></div>
   :mode==="grid"?<div className={"grid gap-3 sm:gap-5 "+(cardSize==="tiny"?"grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10":cardSize==="small"?"grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6":"grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
-   {filtered.map(a=><Link key={a.id} href={readonly?"#":"/anime/"+a.id} className="panel relative isolate overflow-hidden group transition-all hover:-translate-y-1 hover:border-violet-500">
+   {filtered.map(a=><Link key={a.id} href={animeHref(a.id)} className="panel relative isolate overflow-hidden group transition-all hover:-translate-y-1 hover:border-violet-500">
     {a.poster_url&&<span className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true"><Image unoptimized src={a.poster_url} alt="" fill sizes="320px" className="object-cover scale-125 blur-2xl opacity-75"/><span className="absolute inset-0 bg-[#0a0d1c]/40"/></span>}
     <div className="relative z-10 aspect-[3/4] bg-violet-950/20 overflow-hidden">
      {a.poster_url?<Image unoptimized src={a.poster_url} alt={a.title} fill sizes="(max-width:640px) 50vw, 240px" className="object-cover transition-transform duration-500 group-hover:scale-105"/>:<div className="poster-placeholder h-full"><BookOpen size={40}/></div>}
@@ -118,8 +119,8 @@ export default function LibraryView({anime,readonly=false}:{anime:Anime[];readon
    </Link>)}
   </div>:<div className="space-y-3">{filtered.map(a=><div key={a.id} className="panel relative isolate overflow-hidden p-3 flex items-center gap-4">
    {a.poster_url&&<span className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true"><Image unoptimized src={a.poster_url} alt="" fill sizes="480px" className="object-cover scale-110 blur-2xl opacity-75"/><span className="absolute inset-0 bg-[#0a0d1c]/40"/></span>}
-   <Link href={readonly?"#":"/anime/"+a.id} className="relative z-10 shrink-0 w-16 h-22 sm:w-20 sm:h-27 rounded-lg overflow-hidden bg-violet-950/20">{a.poster_url?<Image unoptimized src={a.poster_url} alt={a.title} fill sizes="80px" className="object-cover"/>:<div className="poster-placeholder h-full"><BookOpen size={24}/></div>}</Link>
-   <div className="relative z-10 min-w-0 flex-1"><Link href={readonly?"#":"/anime/"+a.id} className="font-bold hover:text-violet-400 line-clamp-1">{a.title}</Link>{a.title_th&&<p className="muted text-xs truncate">{a.title_th}</p>}<div className="mt-1 flex flex-wrap gap-1">{a.genres.map(g=><span key={g} className="tag" style={genreTagStyle(g)}>{g}</span>)}</div><p className="muted text-xs mt-2">{a.episodes??"—"} ตอน · {a.finished_date}</p></div>
+   <Link href={animeHref(a.id)} className="relative z-10 shrink-0 w-16 h-22 sm:w-20 sm:h-27 rounded-lg overflow-hidden bg-violet-950/20">{a.poster_url?<Image unoptimized src={a.poster_url} alt={a.title} fill sizes="80px" className="object-cover"/>:<div className="poster-placeholder h-full"><BookOpen size={24}/></div>}</Link>
+   <div className="relative z-10 min-w-0 flex-1"><Link href={animeHref(a.id)} className="font-bold hover:text-violet-400 line-clamp-1">{a.title}</Link>{a.title_th&&<p className="muted text-xs truncate">{a.title_th}</p>}<div className="mt-1 flex flex-wrap gap-1">{a.genres.map(g=><span key={g} className="tag" style={genreTagStyle(g)}>{g}</span>)}</div><p className="muted text-xs mt-2">{a.episodes??"—"} ตอน · {a.finished_date}</p></div>
    <span className="relative z-10 font-bold flex gap-1 items-center" style={{color:ratingColor(a.rating)}}><Star size={15} fill="currentColor"/>{a.rating}</span>
    {!readonly&&<div className="relative z-10 hidden lg:flex gap-2"><Link className="btn anime-action anime-action-edit text-xs" href={"/anime/"+a.id+"/edit"}><Pencil size={16}/>แก้ไข</Link><DeleteButton id={a.id}/></div>}
   </div>)}</div>}

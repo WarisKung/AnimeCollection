@@ -10,7 +10,7 @@ import type {Anime} from "@/types/anime";
 import {ratingColor} from "@/lib/rating-color";
 import {genreTagStyle} from "@/lib/genre-color";
 
-export default function FeaturedCarousel({anime,readonly=false}:{anime:Anime[];readonly?:boolean}){
+export default function FeaturedCarousel({anime,readonly=false,shareBase}:{anime:Anime[];readonly?:boolean;shareBase?:string}){
  const reducedMotion=useReducedMotion();
  const router=useRouter();
  const slides=useMemo(()=>[...anime].sort((a,b)=>b.finished_date.localeCompare(a.finished_date)),[anime]);
@@ -92,7 +92,8 @@ export default function FeaturedCarousel({anime,readonly=false}:{anime:Anime[];r
        className="relative mx-auto block aspect-[2/3] w-full max-w-[460px] overflow-hidden rounded-2xl bg-[#282039] text-left shadow-2xl"
        onClick={()=>{
         if(!active){emblaApi?.scrollTo(i);return}
-        if(!readonly)router.push("/anime/"+a.id);
+        if(readonly){if(shareBase)router.push(shareBase+"/anime/"+a.id)}
+        else router.push("/anime/"+a.id);
        }}
       >
        {a.poster_url&&<Image unoptimized src={a.poster_url} alt={a.title} fill priority={i===0} sizes="(max-width:640px) 78vw, 460px" className="object-cover"/>}

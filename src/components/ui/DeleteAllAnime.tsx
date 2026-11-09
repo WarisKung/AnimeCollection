@@ -32,7 +32,7 @@ export default function DeleteAllAnime({count}:{count:number}){
 
  return <section className="panel border-red-500/40 p-5 sm:p-7 space-y-4" aria-labelledby="delete-all-title">
   <div className="flex items-center gap-2 text-red-400"><AlertTriangle size={21}/><h2 id="delete-all-title" className="font-bold text-lg">ลบอนิเมะทั้งหมด</h2></div>
-  <p className="text-sm muted">ขณะนี้มีอนิเมะ {count.toLocaleString("th-TH")} เรื่องในคลัง การลบจะลบข้อมูลอนิเมะทั้งหมดในบัญชีของคุณอย่างถาวร รวมถึงคะแนนและรีวิว แต่ไม่ลบบัญชีหรือรูปโปรไฟล์</p>
+  <p className="text-sm muted">ขณะนี้มีอนิเมะ {count.toLocaleString("th-TH")} เรื่องในคลัง การลบจะลบข้อมูลอนิเมะทั้งหมดในบัญชีของคุณอย่างถาวร แต่ไม่ลบบัญชี</p>
   <label className="block text-sm font-semibold">พิมพ์ <strong className="text-red-400">{CONFIRM_TEXT}</strong> เพื่อยืนยัน
    <input className="field mt-2" autoComplete="off" value={confirmation} onChange={e=>setConfirmation(e.target.value)} placeholder={CONFIRM_TEXT} disabled={busy||count===0}/>
   </label>

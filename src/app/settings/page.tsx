@@ -2,6 +2,8 @@ import Navbar from "@/components/ui/Navbar";
 import {requireOwner} from "@/lib/queries";
 import ProfileSettings from "@/components/ui/ProfileSettings";
 import DeleteAllAnime from "@/components/ui/DeleteAllAnime";
+import DeleteAccount from "@/components/ui/DeleteAccount";
+import ShareSettings from "@/components/ui/ShareSettings";
 import PageBreadcrumb from "@/components/ui/PageBreadcrumb";
 
 export default async function Settings(){
@@ -17,7 +19,9 @@ export default async function Settings(){
       <div className="page-heading"><div><h1 className="page-title">ตั้งค่า<span className="gradient-text">คลังอนิเมะ</span></h1><p className="page-subtitle">จัดการข้อมูลบัญชีและคลังอนิเมะของคุณ</p></div></div>
       <div className="max-w-3xl space-y-9">
         <section><ProfileSettings initialName={profileName} initialAvatar={profileAvatar} email={user.email||""}/></section>
+        <ShareSettings/>
         <DeleteAllAnime count={animeCount??0}/>
+        <DeleteAccount/>
       </div>
     </main>
   </>;

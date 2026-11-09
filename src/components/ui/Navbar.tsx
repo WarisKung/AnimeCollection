@@ -3,7 +3,8 @@ import Link from "next/link";
 import Image from "next/image";
 import {usePathname,useRouter} from "next/navigation";
 import {useEffect,useState} from "react";
-import {BookOpen,House,PlusCircle,Settings,LogOut,Menu,Sparkles,ChartNoAxesColumn,PanelLeftClose,PanelLeftOpen} from "lucide-react";
+import {BookOpen,House,PlusCircle,Settings,LogOut,Menu,ChartNoAxesColumn,PanelLeftClose,PanelLeftOpen} from "lucide-react";
+import BrandLogo from "@/components/ui/BrandLogo";
 import {supabaseBrowser} from "@/lib/supabase/client";
 
 const entries=[
@@ -13,7 +14,7 @@ const entries=[
  {href:"/settings",label:"ตั้งค่า",icon:Settings},
 ];
 
-export default function Navbar({readonly=false}:{readonly?:boolean}){
+export default function Navbar({readonly=false,shareBase}:{readonly?:boolean;shareBase?:string}){
  const pathname=usePathname();
  const router=useRouter();
  const [open,setOpen]=useState(false);
@@ -44,8 +45,29 @@ export default function Navbar({readonly=false}:{readonly?:boolean}){
   return()=>{active=false;window.removeEventListener("anime-profile-updated",load)};
  },[]);
  async function logout(){await supabaseBrowser().auth.signOut();router.replace("/login");router.refresh()}
- const brand=<span className="brand-mark"><span className="brand-icon"><BookOpen size={31}/><Sparkles size={13} className="brand-sparkle"/></span><span className="brand-text">ANIME<span>COMPLETED LIBRARY</span></span></span>;
- if(readonly)return <header className="public-nav"><Link href="/">{brand}</Link><span className="tag">คลังอนิเมะสาธารณะ · อ่านอย่างเดียว</span></header>;
+ const brand=<BrandLogo/>;
+ if(readonly){
+  const libraryHref=shareBase||"/";
+  const statsHref=shareBase?shareBase+"/statistics":"/statistics";
+  const tabs=[
+   {href:libraryHref,label:"คลังอนิเมะ",icon:BookOpen},
+   {href:statsHref,label:"สถิติ",icon:ChartNoAxesColumn},
+  ];
+  return <header className="public-nav flex-wrap">
+   <Link href={libraryHref} className="shrink-0">{brand}</Link>
+   <nav aria-label="เมนูคลังอนิเมะที่แชร์" className="flex w-full sm:w-auto items-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--panel-raised)] p-1">
+    {tabs.map(({href,label,icon:Icon})=>{
+     const selected=href===statsHref?pathname===statsHref:pathname!==statsHref;
+     return <Link
+      key={href}
+      href={href}
+      aria-current={selected?"page":undefined}
+      className={"flex flex-1 sm:flex-none items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors "+(selected?"bg-violet-600 text-white shadow-sm":"text-[var(--muted)] hover:bg-[var(--panel)] hover:text-[var(--foreground)]")}
+     ><Icon size={17}/>{label}</Link>;
+    })}
+   </nav>
+  </header>;
+ }
  return <>
   {!open&&<button type="button" className="mobile-menu-button" aria-label="เปิดเมนู" aria-expanded={false} onClick={()=>setOpen(true)}><Menu size={22}/></button>}
   {open&&<button type="button" className="sidebar-backdrop open" aria-label="ปิดเมนู" onClick={()=>setOpen(false)}/>}

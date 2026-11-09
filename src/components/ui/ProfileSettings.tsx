@@ -5,6 +5,7 @@ import {UserRound,Save,Upload} from "lucide-react";
 import {supabaseBrowser} from "@/lib/supabase/client";
 import {toast} from "sonner";
 import {useRouter} from "next/navigation";
+import {syncShareLink} from "@/lib/actions";
 
 export default function ProfileSettings({initialName,initialAvatar,email}:{
  initialName:string;initialAvatar:string;email:string;
@@ -43,11 +44,23 @@ export default function ProfileSettings({initialName,initialAvatar,email}:{
    }
    const {error}=await sb.auth.updateUser({data:{display_name:displayName,avatar_url:updatedAvatar}});
    if(error)throw error;
+
+   // Wait for the public share URL to follow the new display name.
+   let shareError:string|null=null;
+   try{
+    const result=await syncShareLink();
+    if(!result.ok)shareError=result.message??"ไม่สามารถอัปเดตลิงก์แชร์ได้";
+   }catch(err){
+    shareError=err instanceof Error?err.message:"ไม่สามารถอัปเดตลิงก์แชร์ได้";
+   }
+
    setAvatar(updatedAvatar);setFile(null);
    if(preview){URL.revokeObjectURL(preview);setPreview(null)}
    if(inputRef.current)inputRef.current.value="";
    window.dispatchEvent(new Event("anime-profile-updated"));
-   toast.success("บันทึกโปรไฟล์สำเร็จ");router.refresh();
+   if(shareError)toast.warning("บันทึกโปรไฟล์แล้ว แต่ลิงก์แชร์ยังไม่อัปเดต: "+shareError);
+   else toast.success("บันทึกโปรไฟล์และอัปเดตลิงก์แชร์แล้ว");
+   router.refresh();
   }catch(error){toast.error(error instanceof Error?error.message:"ไม่สามารถบันทึกโปรไฟล์ได้")}
   finally{setBusy(false)}
  }

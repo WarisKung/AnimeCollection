@@ -1,4 +1,39 @@
-import Navbar from "@/components/ui/Navbar";import LibraryView from "@/components/library/LibraryView";import FeaturedCarousel from "@/components/carousel/FeaturedCarousel";import {getPublicLibrary} from "@/lib/queries";import {notFound} from "next/navigation";import type {Metadata} from "next";
+import type {Metadata} from "next";
+import {notFound} from "next/navigation";
+import Navbar from "@/components/ui/Navbar";
+import LibraryView from "@/components/library/LibraryView";
+import FeaturedCarousel from "@/components/carousel/FeaturedCarousel";
+import {getPublicLibrary} from "@/lib/queries";
+
 export const dynamic="force-dynamic";
-export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{const {slug}=await params;const d=await getPublicLibrary(slug);return {title:d?(d.display_name||"Anime Completed Library"):"Not found",robots:{index:false,follow:false},openGraph:d?{title:d.display_name||"Anime Completed Library",images:d.anime.find(a=>a.poster_url)?.poster_url?[d.anime.find(a=>a.poster_url)!.poster_url!]:[]}:undefined};}
-export default async function Share({params}:{params:Promise<{slug:string}>}){const {slug}=await params;const d=await getPublicLibrary(slug);if(!d)notFound();return <><Navbar readonly/><main className="shell py-10 space-y-12"><h1 className="text-4xl font-extrabold">{d.display_name||"Completed Anime Library"}</h1><FeaturedCarousel anime={d.anime} readonly/><LibraryView anime={d.anime} readonly/></main></>}
+
+export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{
+ const {slug}=await params;
+ const library=await getPublicLibrary(slug);
+ return {
+  title:library?.display_name||"คลังอนิเมะที่ดูแล้ว",
+  robots:{index:false,follow:false},
+ };
+}
+
+export default async function SharedLibrary({params}:{params:Promise<{slug:string}>}){
+ const {slug}=await params;
+ const library=await getPublicLibrary(slug);
+ if(!library)notFound();
+
+ const shareBase="/share/"+encodeURIComponent(slug);
+
+ return <>
+  <Navbar readonly shareBase={shareBase}/>
+  <main className="shell py-7 md:py-10 space-y-10">
+   <div className="page-heading !mb-0">
+    <div>
+     <h1 className="page-title">{library.display_name||"คลังอนิเมะ"}<span className="gradient-text">ที่ดูแล้ว</span></h1>
+     <p className="page-subtitle">คลังอนิเมะที่แบ่งปันให้เข้าชม · อ่านอย่างเดียว</p>
+    </div>
+   </div>
+   <FeaturedCarousel anime={library.anime} readonly shareBase={shareBase}/>
+   <div id="my-library"><LibraryView anime={library.anime} readonly shareBase={shareBase}/></div>
+  </main>
+ </>;
+}
