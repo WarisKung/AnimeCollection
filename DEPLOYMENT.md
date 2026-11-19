@@ -1,91 +1,115 @@
-# Deploy Anime Completed Library — GitHub + Vercel + Supabase
+# Deploy Anime Completed Library
 
-โปรเจกต์นี้เป็น Next.js App Router ที่มี Server Actions, API Routes และ Supabase Auth จึง **ไม่รองรับ GitHub Pages แบบ Static โดยตรง**
+คู่มือสำหรับติดตั้งและ Deploy โปรเจกต์ด้วย **GitHub, Vercel และ Supabase** จากเครื่อง Windows, macOS หรือ Linux รันคำสั่งทั้งหมดจากโฟลเดอร์ของ repository ที่มีไฟล์ `package.json`
 
-## 1. ก่อน Deploy
+## 1. เตรียมโปรเจกต์
 
-- ใช้ Node.js 20.9+ (เครื่องพัฒนาใช้ Node.js 22)
-- สร้าง GitHub repository แบบ **Private** เป็นค่าเริ่มต้น (แนะนำ)
-- ใน Supabase ตรวจสอบว่าตารางและ RLS จาก `supabase/migrations/202611040001_init.sql` ทำงานแล้ว
-- ตรวจสอบว่าคอลัมน์ `anime_format`, `watch_url`, `duration_minutes` มีอยู่แล้ว หากไม่มี ให้รัน `supabase/migrations/202611040002_features.sql` ผ่าน Supabase SQL Editor
-- ถ้าคอลัมน์มีแล้ว แต่พบ `Bucket not found` ให้รัน `supabase/migrations/202611040004_avatar_bucket.sql` เพื่อสร้างเฉพาะ Storage bucket `avatars` โดยไม่แก้ข้อมูลอนิเมะ
-- หากรัน migration 002 แล้ว **ไม่ต้อง** รัน `202611040003_clear_thai_titles.sql` ซ้ำเพื่อความจำเป็น (002 ทำการล้างฟิลด์ `title_th` แล้ว)
-- SQL migration 002 ล้างค่า `title_th` เดิมทั้งหมดตาม requirement ของโปรเจกต์ ควรตรวจสอบ/สำรองฐานข้อมูลก่อนรัน
+- ติดตั้ง Git และ Node.js 24.x พร้อม npm
+- เตรียมบัญชี GitHub, Vercel และ Supabase
+- หากต้องการ Deploy แยกจากโปรเจกต์ต้นฉบับ ให้ Fork [AnimeCollection](https://github.com/WarisKung/AnimeCollection) ไปยังบัญชี GitHub ของคุณ แล้ว Clone โดยใช้ URL จากปุ่ม **Code** ของ Fork
 
-## 2. เชื่อมต่อ GitHub
+ตัวอย่างสำหรับ Clone โปรเจกต์ต้นฉบับมาทดลองรัน
 
-โปรเจกต์มี Git ในเครื่องแล้ว แต่ต้องสร้าง repo บน GitHub ก่อน ห้าม Commit `.env.local` หรือคีย์ลับ
-
-```powershell
-cd "D:\AnimeWatched\animewatched"
-git status
-git remote add origin https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPOSITORY.git
-git push -u origin main
+```sh
+git clone https://github.com/WarisKung/AnimeCollection.git
+cd AnimeCollection
+npm ci
 ```
 
-แทน `YOUR_GITHUB_USERNAME` และ `YOUR_REPOSITORY` ด้วยค่าจริงจาก GitHub หลังสร้าง repo แล้ว อย่าพิมพ์ placeholder ตามตัวอักษร
+## 2. ตั้งค่าฐานข้อมูล Supabase
 
-## 3. Deploy ด้วย Vercel
+สร้าง Supabase Project ของคุณเอง เปิด **SQL Editor** แล้วรันไฟล์ SQL ทีละไฟล์ตามลำดับนี้สำหรับฐานข้อมูลใหม่
 
-1. เปิด https://vercel.com/new
-2. เชื่อมบัญชี GitHub และ Import repository
-3. Framework Preset: `Next.js`
-4. Root Directory: `./` (เมื่อ repo root คือ `D:\AnimeWatched\animewatched` )
-5. Build Command: `npm run build` (ใช้ default ของ Next.js/Vercel ได้)
-6. เพิ่ม Environment Variables ใน Project Settings → Environment Variables:
+| ลำดับ | ไฟล์ | หน้าที่ |
+| --- | --- | --- |
+| 1 | [`202611040001_init.sql`](./supabase/migrations/202611040001_init.sql) | สร้างตาราง ตั้งค่า Row Level Security (RLS) และฟังก์ชันแชร์คลัง |
+| 2 | [`202611040002_features.sql`](./supabase/migrations/202611040002_features.sql) | เพิ่มข้อมูลอนิเมะ สร้าง bucket `avatars` และล้างค่า `title_th` เดิม |
+| 3 | [`202611040003_clear_thai_titles.sql`](./supabase/migrations/202611040003_clear_thai_titles.sql) | ล้างค่า `title_th` เดิม |
+| 4 | [`202611040004_avatar_bucket.sql`](./supabase/migrations/202611040004_avatar_bucket.sql) | ตั้งค่า bucket `avatars` และสิทธิ์อัปโหลดรูป |
+| 5 | [`202611090005_delete_account.sql`](./supabase/migrations/202611090005_delete_account.sql) | เพิ่มสิทธิ์อ่านรายการไฟล์ของเจ้าของและฟังก์ชันลบบัญชี |
 
-| Name | Value |
-| ---- | ----- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase Project URL จริง |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase Publishable/Anon Key จริงที่ใช้อยู่ใน `.env.local` |
-| `NEXT_PUBLIC_SITE_URL` | URL Production ที่ Vercel สร้างให้ เช่น `https://YOUR-PROJECT.vercel.app` |
+สำหรับฐานข้อมูลเดิม ให้สำรองข้อมูลและตรวจว่าเคยรันไฟล์ไหนแล้วก่อนใช้ migrations ที่ยังขาด ไฟล์ลำดับ 2 และ 3 จะล้างค่าในคอลัมน์ `title_th` หากลำดับ 2 ล้างข้อมูลไปแล้ว ให้ข้ามลำดับ 3 สำหรับงานล้างชื่อไทยเดิม
 
-ตั้งค่า Environment Variables สำหรับ Production และ Preview เท่าที่ใช้งาน และ **อย่า** คัดลอก Service Role Key หรือ Database Password ใส่ในตัวแปร `NEXT_PUBLIC_*`
+## 3. ตั้งค่าและทดสอบบนเครื่อง
 
-7. กด Deploy. เมื่อเชื่อม GitHub แล้ว Vercel จะ Deploy ใหม่หลัง Push โค้ดตาม branch production
+คัดลอก [`.env.example`](./.env.example) เป็น `.env.local` ในโฟลเดอร์เดียวกับ `package.json`
 
-**หมายเหตุ:** การกำหนด `NEXT_PUBLIC_SITE_URL` ของโปรเจกต์นี้ใช้เพื่อการตั้งค่าการ Deploy และความพร้อมสำหรับการอ้างอิง URL; โค้ดปัจจุบันใช้ URL จาก request สำหรับ callback
-
-## 4. ตั้งค่า Supabase Auth ให้รองรับโดเมนจริง
-
-เปิด https://supabase.com/dashboard → Project → Authentication → URL Configuration
-
-- Site URL: `https://YOUR-PROJECT.vercel.app` (ใช้โดเมน Production จริง)
-- Redirect URLs:
-  - `https://YOUR-PROJECT.vercel.app/**`
-  - `http://localhost:3000/**` สำหรับการพัฒนา
-  - กรณีต้องใช้ Vercel Preview ให้ตั้ง pattern ที่ตรงกับ Project/Team ของคุณ ตาม Supabase docs
-
-เว็บมีเส้นทาง callback `/auth/callback` ซึ่งใช้กับ code exchange. ระบบที่ใช้งานอยู่ตอนนี้ล็อกอินด้วยอีเมล/รหัสผ่าน
-
-## 5. ทดสอบหลัง Deploy
-
-1. เปิด Production URL ผ่านมือถือหรือเครื่องอื่น
-2. ล็อกอินบัญชีเจ้าของ
-3. เพิ่ม/แก้ไขอนิเมะ ตรวจสอบฟิลด์ใหม่
-4. ทดสอบการค้นหา AniList, Carousel, Statistics และหน้า Share (เมื่อเปิด Public)
-5. อัปโหลดรูปโปรไฟล์ (ตรวจ `avatars` bucket)
-6. ตรวจ Row Level Security โดยใช้บัญชีอื่น: ห้ามมองเห็นหรือแก้ข้อมูลส่วนตัวของเจ้าของ
-7. ห้ามทดสอบปุ่ม `ลบอนิเมะทั้งหมด` กับข้อมูลจริงโดยไม่มีสำรองข้อมูล
-
-## คำสั่งทดสอบบนเครื่อง
+**Windows PowerShell**
 
 ```powershell
-cd "D:\AnimeWatched\animewatched"
-npm ci
-npx tsc --noEmit
+Copy-Item .env.example .env.local
+```
+
+**macOS / Linux**
+
+```sh
+cp .env.example .env.local
+```
+
+กรอก URL และคีย์จาก Supabase Project เดียวกัน
+
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY
+```
+
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` รับ Publishable Key หรือ Anon Key ได้ เก็บ `.env.local` ไว้ในเครื่องและห้ามใส่ Secret Key, Service Role Key หรือรหัสผ่านฐานข้อมูลในตัวแปร `NEXT_PUBLIC_*`
+
+```sh
+npm run dev
+```
+
+เปิด [http://localhost:3000](http://localhost:3000) หากต้องการทดสอบอีเมลยืนยันสมัครสมาชิก ให้เพิ่ม URL สำหรับ localhost ตามหัวข้อ Supabase Auth ด้านล่าง
+
+ใช้คำสั่งต่อไปนี้เพื่อตรวจโค้ดและ build ก่อน Deploy
+
+```sh
 npm run lint
+npx tsc --noEmit
 npm run build
 ```
 
-## Troubleshooting
+## 4. Deploy บน Vercel
 
-- `Could not find anime_format column` → Migration 002 ยังไม่ได้รันใน Supabase Project ที่เว็บไซต์ใช้
-- `Bucket not found` → Migration 002 ยังไม่ได้สร้าง bucket `avatars` หรือเชื่อมคนละ Supabase Project
-- Login กลับไป localhost/redirect ผิดโดเมน → ตรวจ Supabase Auth → URL Configuration
-- Vercel Build ล้มเหลวเพราะ Environment Variables → ตรวจว่าตั้งทั้ง URL และ Anon Key ตาม Project จริงแล้ว
-- หากไม่เห็น Repository บนหน้า Vercel Import → ตรวจสิทธิ์ Vercel GitHub Integration ให้เข้าถึง repo นั้น
+1. เปิด [Vercel New Project](https://vercel.com/new) เชื่อมบัญชี GitHub แล้ว Import repository ที่ต้องการ Deploy
+2. เลือก Framework Preset **Next.js** และใช้โฟลเดอร์ที่มี `package.json` เป็น Root Directory สำหรับ repo นี้คือโฟลเดอร์หลัก `./`
+3. เลือก Node.js **24.x** ใน Project Settings และใช้ Build Command ตามค่าเริ่มต้นของ Next.js หรือ `npm run build`
+4. เพิ่ม `NEXT_PUBLIC_SUPABASE_URL` และ `NEXT_PUBLIC_SUPABASE_ANON_KEY` ใน **Environment Variables** สำหรับ Production หากใช้ Preview ให้เพิ่มค่าสำหรับ Preview ด้วย
+5. กด **Deploy** แล้วนำ URL ที่ได้ไปตั้งค่าใน Supabase Auth หากเปลี่ยน Environment Variables ภายหลัง ให้ Redeploy เพื่อให้ build ใหม่ใช้ค่าที่แก้
 
-ลิงก์เอกสารทางการ:
-- https://vercel.com/docs/git
-- https://supabase.com/docs/guides/auth/redirect-urls
+โค้ดปัจจุบันสร้าง URL ยืนยันอีเมลจากโดเมนที่ผู้ใช้เปิดอยู่ โดยใช้เส้นทาง `/auth/callback` ตัวแปร `NEXT_PUBLIC_SITE_URL` ที่อยู่ในไฟล์ตัวอย่างจึงเป็นค่าเสริม
+
+เมื่อเชื่อม GitHub แล้ว การ Push ไปยัง Production Branch จะสร้าง Production Deployment ใหม่ตามการตั้งค่าของโปรเจกต์ ดูรายละเอียดเพิ่มเติมใน [Vercel Git Deployments](https://vercel.com/docs/git), [Environment Variables](https://vercel.com/docs/environment-variables) และ [Node.js Versions](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions)
+
+## 5. ตั้งค่า Supabase Auth
+
+เปิด **Authentication → URL Configuration** ใน Supabase Dashboard แล้วใช้โดเมนของคุณแทน `your-project.vercel.app`
+
+| การตั้งค่า | ตัวอย่าง |
+| --- | --- |
+| Site URL สำหรับ Production | `https://your-project.vercel.app` |
+| Redirect URL สำหรับ Production | `https://your-project.vercel.app/auth/callback` |
+| Redirect URL สำหรับทดสอบบนเครื่อง | `http://localhost:3000/auth/callback` |
+
+ถ้า Supabase Project นี้ใช้บนเครื่องอย่างเดียว ให้ตั้ง **Site URL** เป็น `http://localhost:3000` หากทดสอบการยืนยันอีเมลบน Vercel Preview ให้เพิ่ม URL ของ Preview ที่ลงท้ายด้วย `/auth/callback` ด้วย ดู [Supabase Redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls)
+
+หากเปิดรับสมัครสาธารณะและเปิดการยืนยันอีเมล ให้ตั้งค่า **Custom SMTP** ใน Supabase Auth แล้วทดสอบส่งอีเมลไปยังบัญชีผู้ใช้จริงก่อนเปิดใช้งาน ดู [Supabase Custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp)
+
+## 6. ตรวจสอบหลัง Deploy
+
+- สมัครบัญชีทดสอบ ยืนยันอีเมลตามการตั้งค่า แล้วเข้าสู่ระบบ
+- ค้นหาอนิเมะจาก AniList เพิ่มรายการ แก้ไขข้อมูล และเปิดหน้าสถิติ
+- อัปโหลดรูปโปรไฟล์เพื่อตรวจ bucket `avatars`
+- เปิดแชร์คลัง แล้วเปิดลิงก์จากหน้าต่างที่ยังไม่ได้เข้าสู่ระบบ ใช้บัญชีทดสอบอีกบัญชีเพื่อตรวจว่าข้อมูลคลังส่วนตัวเข้าถึงได้เฉพาะเจ้าของ
+- หากทดสอบการลบคลังหรือลบบัญชี ให้ใช้บัญชีและข้อมูลทดสอบ
+
+## แก้ปัญหาเบื้องต้น
+
+| อาการ | จุดที่ควรตรวจ |
+| --- | --- |
+| `Could not find anime_format` | ตรวจว่า migration ลำดับ 2 ทำงานแล้วใน Supabase Project ที่แอปเชื่อมต่อ |
+| `Bucket not found` | ตรวจ bucket `avatars` ใน Storage และ migration ลำดับ 2 หรือ 4 |
+| ลิงก์ยืนยันอีเมลพาไปผิดโดเมน | ตรวจ **Site URL** และ **Redirect URLs** ให้ตรงกับโดเมนและเส้นทาง `/auth/callback` |
+| สมัครแล้วขึ้นว่ามีคำขอมากเกินไป | ตรวจ Auth Logs, การตั้งค่า SMTP และ Auth Rate Limits ใน Supabase |
+| Build ล้มเหลวบน Vercel | เปิด Build Logs แล้วตรวจ Node.js, Root Directory และ Environment Variables ของ deployment นั้น |
+| หา repository ไม่เจอตอน Import | ตรวจสิทธิ์ของ Vercel GitHub Integration ให้เข้าถึง repository ที่เลือก |
